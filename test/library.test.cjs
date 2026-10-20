@@ -1,6 +1,75 @@
-const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');const {Library}=require('../library.cjs');
-async function setup(t){const root=await fs.mkdtemp(path.join(os.tmpdir(),'bridge-test-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));const dir=path.join(root,'photos');await fs.mkdir(dir);const lib=new Library(path.join(root,'catalog.json'));await lib.init();return {root,dir,lib};}
-test('sequência com nomes sobrepostos preserva conteúdo e classificação',async t=>{const {dir,lib}=await setup(t);await fs.writeFile(path.join(dir,'001.jpg'),'one');await fs.writeFile(path.join(dir,'002.jpg'),'two');const data=await lib.open(dir);await lib.rate([data.entries[0].id],{rating:5,label:'Diploma'});const rows=lib.preview(data.entries.map(e=>e.id),2,3);await lib.rename(rows);assert.equal(await fs.readFile(path.join(dir,'002.jpg'),'utf8'),'one');assert.equal(await fs.readFile(path.join(dir,'003.jpg'),'utf8'),'two');assert.equal((await lib.list(dir)).entries[0].rating,5);});
-test('colisão não sobrescreve arquivo e conserva originais',async t=>{const {dir,lib}=await setup(t);await fs.writeFile(path.join(dir,'a.jpg'),'original');await fs.writeFile(path.join(dir,'039.jpg'),'existing');const data=await lib.open(dir);await assert.rejects(()=>lib.rename(lib.preview([data.entries.find(e=>e.name==='a.jpg').id],39,3)),/Já existe/);assert.equal(await fs.readFile(path.join(dir,'a.jpg'),'utf8'),'original');assert.equal(await fs.readFile(path.join(dir,'039.jpg'),'utf8'),'existing');});
-test('bloqueia navegação fora da raiz e arquivos alterados',async t=>{const {root,dir,lib}=await setup(t);await fs.writeFile(path.join(dir,'a.jpg'),'a');const data=await lib.open(dir);await assert.rejects(()=>lib.list(root),/fora/);await fs.writeFile(path.join(dir,'a.jpg'),'modified');await assert.rejects(()=>lib.rename(lib.preview([data.entries[0].id],1,3)),/alterado/);assert.deepEqual(await fs.readdir(dir),['a.jpg']);});
-test('rótulos e estrelas persistem sem apagar um ao alterar o outro',async t=>{const {root,dir,lib}=await setup(t);await fs.writeFile(path.join(dir,'a.png'),'a');const {entries}=await lib.open(dir);await lib.rate([entries[0].id],{label:'Pais'});await lib.rate([entries[0].id],{rating:4});const other=new Library(path.join(root,'catalog.json'));await other.init();const data=await other.open(dir);assert.equal(data.entries[0].rating,4);assert.equal(data.entries[0].label,'Pais');});
+const { test } = require("node:test"),
+  assert = require("node:assert/strict"),
+  fs = require("node:fs/promises"),
+  os = require("node:os"),
+  path = require("node:path");
+const { Library } = require("../library.cjs");
+async function setup(t) {
+  const root = await fs.realpath(
+    await fs.mkdtemp(path.join(os.tmpdir(), "bridge-test-")),
+  );
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const dir = path.join(root, "photos");
+  await fs.mkdir(dir);
+  const lib = new Library(path.join(root, "catalog.json"));
+  await lib.init();
+  return { root, dir, lib };
+}
+test("sequência com nomes sobrepostos preserva conteúdo e classificação", async (t) => {
+  const { dir, lib } = await setup(t);
+  await fs.writeFile(path.join(dir, "001.jpg"), "one");
+  await fs.writeFile(path.join(dir, "002.jpg"), "two");
+  const data = await lib.open(dir);
+  await lib.rate([data.entries[0].id], { rating: 5, label: "green" });
+  const rows = lib.preview(
+    data.entries.map((e) => e.id),
+    2,
+    3,
+  );
+  await lib.rename(rows);
+  assert.equal(await fs.readFile(path.join(dir, "002.jpg"), "utf8"), "one");
+  assert.equal(await fs.readFile(path.join(dir, "003.jpg"), "utf8"), "two");
+  assert.equal((await lib.list(dir)).entries[0].rating, 5);
+});
+test("colisão não sobrescreve arquivo e conserva originais", async (t) => {
+  const { dir, lib } = await setup(t);
+  await fs.writeFile(path.join(dir, "a.jpg"), "original");
+  await fs.writeFile(path.join(dir, "039.jpg"), "existing");
+  const data = await lib.open(dir);
+  await assert.rejects(
+    () =>
+      lib.rename(
+        lib.preview([data.entries.find((e) => e.name === "a.jpg").id], 39, 3),
+      ),
+    /Já existe/,
+  );
+  assert.equal(await fs.readFile(path.join(dir, "a.jpg"), "utf8"), "original");
+  assert.equal(
+    await fs.readFile(path.join(dir, "039.jpg"), "utf8"),
+    "existing",
+  );
+});
+test("bloqueia navegação fora da raiz e arquivos alterados", async (t) => {
+  const { root, dir, lib } = await setup(t);
+  await fs.writeFile(path.join(dir, "a.jpg"), "a");
+  const data = await lib.open(dir);
+  await assert.rejects(() => lib.list(root), /fora/);
+  await fs.writeFile(path.join(dir, "a.jpg"), "modified");
+  await assert.rejects(
+    () => lib.rename(lib.preview([data.entries[0].id], 1, 3)),
+    /alterado/,
+  );
+  assert.deepEqual(await fs.readdir(dir), ["a.jpg"]);
+});
+test("rótulos e estrelas persistem sem apagar um ao alterar o outro", async (t) => {
+  const { root, dir, lib } = await setup(t);
+  await fs.writeFile(path.join(dir, "a.png"), "a");
+  const { entries } = await lib.open(dir);
+  await lib.rate([entries[0].id], { label: "pink" });
+  await lib.rate([entries[0].id], { rating: 4 });
+  const other = new Library(path.join(root, "catalog.json"));
+  await other.init();
+  const data = await other.open(dir);
+  assert.equal(data.entries[0].rating, 4);
+  assert.equal(data.entries[0].label, "pink");
+});

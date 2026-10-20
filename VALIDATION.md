@@ -1,10 +1,9 @@
-# Validação — 20/10/2026
+# Validação da versão 0.2.0
 
-Ambiente de teste: Linux x64 na nuvem, Node.js 24.18.0, Electron 44.9.1, Playwright 1.58.2 e Xvfb.
+Ambiente local: Linux x64 na nuvem, Node.js 24.18.0, Electron 44.9.1, Playwright 1.58.2 e Xvfb.
 
-- `npm test`: 4 testes aprovados. Verificados renomeação com sobreposição de nomes, conteúdo preservado, bloqueio de colisões, detecção de alterações externas, confinamento da navegação e persistência independente de estrelas/rótulos.
-- `npm run test:gui`: aprovado com Electron real e três imagens sintéticas. Verificados carregamento da imagem, estado nativo de tela cheia, navegação por setas, saída por Esc, Ctrl+B, remoção/restauração na seleção de revisão, manutenção dos três arquivos no disco, estrelas e aplicação da renomeação a partir de 039.
-- JavaScript principal e interface passaram por verificação de sintaxe.
-- O pacote contém apenas a implementação própria. Nenhuma DLL ou executável Adobe foi incluído.
+- Dez testes de arquivos, navegação e preferências: renomeação com nomes sobrepostos, bloqueio de colisões e alterações externas, persistência de estrelas/rótulos, navegação acima da pasta inicial, voltar/avançar, falha sem alterar a pasta atual, Este Computador, árvore de pastas, raízes Windows/UNC, migração do catálogo 0.1.0 e validação de atalhos.
+- Teste de interface com Electron real: revisão com seleção única e múltipla, setas e botões anterior/próxima, circulação entre início e fim, foco deixado em um seletor, retirada/restauração sem excluir arquivos (inclusive seleção vazia), rótulo na foto atual, nomes/atalhos mantidos após recarregar, tela cheia nativa, duplo clique em pastas, pasta superior fora da raiz inicial, endereço digitado, histórico, Este Computador e renomeação.
+- O workflow Windows release executa esses testes em Windows e só publica o pacote se todos os passos anteriores forem aprovados. Os resultados ficam disponíveis na aba Actions do GitHub.
 
-O executável Windows x64 é produzido pelo electron-builder. Sua execução no Windows não foi testada neste ambiente Linux. Recursos e limitações da versão estão no README.md.
+O teste usa imagens sintéticas e pastas temporárias. Não há acesso ao computador do usuário; o funcionamento no compartilhamento de rede particular e nas fotografias reais ainda depende de verificação no ambiente do usuário.

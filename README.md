@@ -1,52 +1,70 @@
-# BRIDGEIMAGINE — primeira versão
+# BRIDGEIMAGINE 0.2.0
 
-Aplicativo desktop independente para organizar fotografias locais. Implementação própria em Electron; não utiliza executáveis, DLLs, marcas gráficas ou código do Adobe Bridge.
+Aplicativo desktop independente para organizar fotografias locais. Implementação própria em Electron, sem executáveis, DLLs ou recursos gráficos do Adobe Bridge.
 
-## Windows
+## Baixar e usar no Windows
 
-O pacote portátil, quando gerado, fica em `dist/BRIDGEIMAGINE 0.1.0.exe`. Abra o executável e clique em **Abrir pasta**. Esta versão não é assinada digitalmente.
+Na [seção Releases](https://github.com/Samukaxcn/BRIDGEIMAGINE/releases), baixe o ZIP da versão mais recente, extraia e execute **BRIDGEIMAGINE.exe**. O pacote é portátil, sem assinatura digital e não requer Adobe Bridge nem Node.js para executar. Feche a versão anterior antes de abrir a nova.
 
-Para executar a partir do código, instale Node.js 24 LTS e use PowerShell nesta pasta:
+## Navegação pelo computador
+
+- **Este Computador** lista unidades locais e mapeadas. Acesso rápido abre Pasta pessoal, Área de Trabalho, Documentos, Imagens e Downloads.
+- Use a árvore à esquerda: clique na seta para expandir ou no nome da pasta para abrir.
+- Dê duplo clique nas pastas da grade, use **Pasta acima**, **Voltar** e **Avançar**, ou clique nos componentes do caminho.
+- A barra de endereço aceita caminhos completos, por exemplo `C:\Fotos` ou `\\Servidor\ftp2026\AGENCIA RETRATO\Album amostra`. Ctrl+L seleciona o endereço; Enter abre a pasta. No Windows, variáveis como `%USERPROFILE%` são aceitas.
+- Alt+← volta, Alt+→ avança, Alt+↑ sobe e F5 atualiza. A navegação pode sair da pasta inicial. Unidades de rede mapeadas são listadas; compartilhamentos UNC são abertos pelo endereço completo, sem descoberta automática de todos os servidores.
+- Uma pasta indisponível ou sem permissão gera um aviso e preserva a visualização anterior. `Thumbs.db` e `desktop.ini` não aparecem na grade.
+
+## Tela cheia e revisão
+
+- **Espaço:** foto atual em tela cheia; ←/→ navegam; Esc ou Espaço retorna.
+- **Ctrl+B:** revisão em carrossel. Com zero ou uma foto selecionada, abre todas as imagens visíveis, começando pela foto ativa. Com duas ou mais fotos selecionadas, revisa apenas essas imagens.
+- **←/→:** foto anterior/próxima. Também há botões na tela; a navegação circula do final para o início e vice-versa.
+- **↓:** retira a foto apenas da seleção de revisão. **↑:** restaura a última retirada, em ordem inversa. Mesmo ao retirar todas, ↑ permite restaurar. **Nenhum arquivo é apagado ou movido.** Esc retorna à grade com a seleção restante.
+- Os atalhos de rótulo e Ctrl+1–5 funcionam na foto atual durante a revisão/tela cheia. Na grade, aplicam-se aos arquivos selecionados.
+
+## Rótulos e atalhos personalizados
+
+Clique em **Rótulos e atalhos** na barra superior. Altere o nome de cada cor e clique no campo de atalho, depois pressione a tecla ou combinação desejada. Backspace limpa um atalho; **Salvar** aplica e mantém a configuração entre sessões. **Restaurar padrões** prepara os valores originais, que só são aplicados ao salvar.
+
+Padrões baseados nos exemplos enviados:
+
+| Cor | Nome | Atalho |
+| --- | --- | --- |
+| Vermelho | Abertura | 6 |
+| Amarelo | Colação | 7 |
+| Verde | Diploma | 8 |
+| Azul | Juramento | 9 |
+| Rosa | Pais | 5 |
+
+**Ctrl+1 a Ctrl+5** atribuem estrelas; **Ctrl+0** limpa as estrelas. Assim a tecla 5 pode ser usada para Pais. Conflitos entre rótulos e atalhos reservados são bloqueados. Os nomes também aparecem na lateral, na revisão e no menu de botão direito. Mudar o nome de um rótulo mantém a associação com suas fotos.
+
+Configurações ficam em `preferences.json` e classificações em `catalog.json`, no diretório de dados do aplicativo (`%APPDATA%\bridgeimagine` no Windows). O catálogo da versão 0.1.0 é lido, mantendo os rótulos existentes. As classificações ainda não são importadas de ou gravadas em XMP/EXIF.
+
+## Outros recursos
+
+Miniaturas para JPEG, PNG, WebP, GIF, BMP e AVIF conforme os codecs do Electron; busca pelo nome; filtro por estrelas; seleção com Ctrl/Shift e Ctrl+A; navegação de miniaturas por setas; rejeição e tamanho ajustável de miniaturas.
+
+Renomeação em lote na mesma pasta com prefixo opcional, sequência inicial e 1–6 dígitos, preservando a extensão. Início 39 e três dígitos gera `039.jpeg`. A prévia é obrigatória. A operação bloqueia colisões/alterações detectadas e aceita sequências sobrepostas, preservando conteúdo.
+
+A renomeação utiliza hard links temporários (requer NTFS no Windows). Não altere os mesmos arquivos em outro programa durante a operação. Quedas abruptas podem exigir recuperação manual. Se a recuperação automática falhar, o aplicativo informa os caminhos das cópias temporárias preservadas. Teste primeiro em cópias das fotos.
+
+## Limites atuais
+
+Ainda sem RAW/HEIC/PDF, gerenciamento de cor, zoom/pan, vídeo, exportação, regras avançadas/presets de renomeação, cópia/movimentação em lote ou cache de miniaturas. As imagens originais são carregadas para prévia, e pastas muito grandes ainda precisam de otimização. Renomeações externas não são acompanhadas pelo catálogo.
+
+## Executar, testar e gerar o pacote
+
+Instale Node.js 24 LTS e, em PowerShell nesta pasta:
 
 ```powershell
 npm ci
 npm start
-```
-
-Para gerar novamente o executável portátil para Windows x64:
-
-```powershell
+npm test
+npm run test:gui
 npm run pack:win
 ```
 
-O primeiro início/empacotamento baixa os binários do Electron e precisa de internet. Depois, o aplicativo trabalha com arquivos locais, sem servidor e sem credenciais Adobe.
+O primeiro início/empacotamento pelo código baixa Electron e precisa de internet; o pacote distribuído já contém o runtime e funciona localmente. O executável gerado fica em `dist/BRIDGEIMAGINE 0.2.0.exe`.
 
-## Funcionalidades implementadas
-
-- Abrir pasta e navegar nas subpastas, voltar ao diretório superior e atualizar.
-- Miniaturas para JPEG, PNG, WebP, GIF, BMP e AVIF, conforme os codecs do Electron; outros arquivos aparecem sem prévia.
-- Pesquisa pelo nome, filtro por estrelas e tamanho ajustável das miniaturas.
-- Seleção com Ctrl, intervalo com Shift e Ctrl+A.
-- Estrelas 1–5, Ctrl+0 para limpar, rejeição e rótulos Abertura, Colação, Diploma, Juramento e Pais.
-- Espaço abre a foto em tela cheia; esquerda/direita navegam; Esc ou Espaço retorna.
-- Ctrl+B abre revisão das fotos selecionadas, ou das imagens visíveis se não houver seleção. Esquerda/direita navegam; **baixo retira apenas da seleção de revisão**; **cima restaura a última retirada**, em ordem inversa. Esc retorna com a seleção restante. Nenhum desses atalhos exclui ou move arquivos.
-- Renomeação em lote na mesma pasta: prefixo opcional, sequência inicial e 1–6 dígitos, conservando a extensão. Por exemplo, início 39 e três dígitos gera `039.jpeg`. A prévia é obrigatória. A operação bloqueia colisões e alterações detectadas e aceita sequências com nomes sobrepostos.
-
-Classificações e rótulos ficam no `catalog.json` do diretório de dados do Electron (`%APPDATA%/bridgeimagine` no Windows). **Ainda não são escritos ou importados de XMP/EXIF**, portanto não aparecem automaticamente no Adobe Bridge. Renomeações realizadas neste aplicativo mantêm a associação do catálogo; renomeações externas não são acompanhadas.
-
-## Limites desta entrega
-
-Esta é a versão inicial, não uma reprodução de todas as funções do Adobe Bridge. Ainda não inclui RAW/HEIC/PDF, gerenciamento de cor, zoom/pan, prévias em cache, árvore recursiva completa, vídeo, exportação, presets de renomeação, regras de metadados nem cópia/movimentação em lote. As miniaturas carregam as imagens originais; pastas muito grandes precisam de otimização futura.
-
-A renomeação utiliza links temporários para preservar conteúdo e evitar sobrescritas. Requer um sistema de arquivos com suporte a hard links (NTFS no Windows). Em caso de falha de recuperação, o aplicativo informa as cópias temporárias preservadas para recuperação manual. Não movimente os mesmos arquivos em outro programa durante a operação; quedas abruptas do sistema ainda exigem recuperação manual. Teste primeiro em cópias das fotografias.
-
-## Validação
-
-```powershell
-npm test
-npm run test:gui
-```
-
-Os testes de arquivos verificam colisões, preservação de conteúdo, classificação persistente e bloqueio de navegação fora da raiz. O teste de interface abre o Electron com imagens sintéticas e verifica tela cheia, navegação, revisão sem exclusão, restauração, estrelas e renomeação. Em Linux, o teste gráfico requer DISPLAY/Xvfb e usa `--no-sandbox` apenas no processo de teste; a aplicação mantém isolamento de contexto, renderer sem Node e sandbox configurado. O teste produz `screenshot.png`.
-
-Validação realizada no ambiente Linux da nuvem. O pacote Windows pode ser gerado aqui, mas precisa de validação no seu Windows antes de uso em produção.
+O teste gráfico abre Electron real com imagens sintéticas e verifica regressões da revisão, navegação, atalhos/configurações persistentes e renomeação. Em Linux, requer DISPLAY/Xvfb; `--no-sandbox` é usado somente no processo de teste Linux. O aplicativo mantém isolamento de contexto, renderer sem Node e sandbox configurado. A automação do GitHub executa os testes e gera o pacote em Windows antes de publicar a Release.

@@ -1,6 +1,11 @@
 name: Windows release
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag (must match package.json)
+        required: true
+        default: v0.2.0
 permissions:
   contents: write
 jobs:
@@ -8,21 +13,31 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 20
     env:
-      ELECTRON_BUILDER_COMPRESSION_LEVEL: '1'
+      ELECTRON_BUILDER_COMPRESSION_LEVEL: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: "24"
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Validate release tag
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          if ($env:RELEASE_TAG -ne "v$version") { throw 'Tag does not match package version.' }
+      - name: Desktop regression tests
+        run: npm run test:gui
       - run: npm run pack:win
       - name: Prepare portable download
         shell: pwsh
         run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
           New-Item -ItemType Directory -Path portable
-          Copy-Item 'dist/BRIDGEIMAGINE 0.1.0.exe' 'portable/BRIDGEIMAGINE.exe'
+          Copy-Item "dist/BRIDGEIMAGINE $version.exe" 'portable/BRIDGEIMAGINE.exe'
           Copy-Item 'README.md' 'portable/LEIA-ME.md'
           $checksum = (Get-FileHash 'portable/BRIDGEIMAGINE.exe' -Algorithm SHA256).Hash.ToLower()
           "$checksum  BRIDGEIMAGINE.exe" | Set-Content 'portable/SHA256SUMS.txt'
@@ -31,7 +46,16 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          gh release upload v0.1.0 'dist/BRIDGEIMAGINE-Windows.zip' --clobber --repo '${{ github.repository }}'
+          gh release upload $env:RELEASE_TAG 'dist/BRIDGEIMAGINE-Windows.zip' --clobber
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          gh release edit v0.1.0 --draft=false --repo '${{ github.repository }}'
+          gh release edit $env:RELEASE_TAG --draft=false --latest
+      - name: Preserve GUI diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-diagnostics
+          path: gui-failure.png
+          if-no-files-found: ignore

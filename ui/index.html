@@ -1,5 +1,190 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' photo:; style-src 'self'; script-src 'self'"><title>BRIDGEIMAGINE</title><link rel="stylesheet" href="style.css"></head><body>
-<header><strong>▦ BRIDGE<span>IMAGINE</span></strong><button id="open">Abrir pasta</button><button id="up">↑ Pasta acima</button><button id="refresh">↻ Atualizar</button><input id="search" placeholder="Pesquisar nesta pasta"><button id="review">Revisão · Ctrl+B</button><button id="rename">Renomear em lote</button></header>
-<nav id="path">Sua biblioteca de fotografias</nav><main><aside><h3>BIBLIOTECA</h3><p id="libraryhelp">Abra uma pasta para começar.</p><div id="folders"></div><hr><h3>ATALHOS</h3><p>Espaço · Tela cheia</p><p>Ctrl+B · Revisão</p><p>← → · Navegar</p><p>↓ · Tirar da revisão</p><p>↑ · Restaurar na revisão</p><p>1–5 · Estrelas</p><p>Ctrl+A · Selecionar tudo</p></aside><section id="grid"></section><aside><h3>ORGANIZAR</h3><label>Filtrar classificação<select id="filter"><option value="all">Todas</option><option value="-1">Rejeitadas</option><option value="0">Sem estrelas</option><option value="1">★</option><option value="2">★★</option><option value="3">★★★</option><option value="4">★★★★</option><option value="5">★★★★★</option></select></label><h3>SELEÇÃO</h3><div id="details">Nenhum arquivo selecionado</div><div id="stars"></div><label>Rótulo<select id="label"><option value="">Sem rótulo</option><option>Abertura</option><option>Colação</option><option>Diploma</option><option>Juramento</option><option>Pais</option></select></label><button id="reject">Rejeitar</button><button id="clear">Limpar estrelas</button><p class="muted">Classificações salvas no catálogo local do aplicativo.</p></aside></main><footer><span id="status">Abra uma pasta • Os arquivos permanecem no seu computador</span><label>Miniaturas <input id="size" type="range" min="110" max="320" value="180"></label></footer>
-<div id="viewer" hidden><div id="viewerbar"><span id="mode"></span><button id="close">Voltar · Esc</button></div><div id="carousel"></div><p id="caption"></p><p id="hint"></p></div>
-<dialog id="batch"><h2>Renomear em lote</h2><p>Renomear na mesma pasta, preservando as extensões.</p><label>Prefixo <input id="prefix"></label><label>Sequência inicial <input id="start" type="number" min="0" value="1"></label><label>Dígitos <select id="padding"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></label><button id="preview">Visualizar</button><pre id="plan"></pre><button id="apply" disabled>Aplicar renomeação</button><button id="cancel">Cancelar</button></dialog><div id="error" role="alert" hidden></div><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' photo:; style-src 'self'; script-src 'self'"
+    />
+    <title>BRIDGEIMAGINE</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <strong>▦ BRIDGE<span>IMAGINE</span></strong>
+      <button id="open">Abrir pasta</button>
+      <button id="review">Revisão · Ctrl+B</button>
+      <button id="rename">Renomear em lote</button>
+      <button id="preferences">Rótulos e atalhos</button>
+      <span class="version">0.2.0</span>
+    </header>
+    <div id="navigation">
+      <button id="back" title="Voltar · Alt+←" aria-label="Voltar" disabled>
+        ←
+      </button>
+      <button
+        id="forward"
+        title="Avançar · Alt+→"
+        aria-label="Avançar"
+        disabled
+      >
+        →
+      </button>
+      <button id="up" title="Pasta acima · Alt+↑" aria-label="Pasta acima">
+        ↑
+      </button>
+      <button id="refresh" title="Atualizar · F5" aria-label="Atualizar">
+        ↻
+      </button>
+      <button id="computer">Este Computador</button>
+      <input
+        id="address"
+        aria-label="Endereço da pasta"
+        placeholder="Digite uma pasta ou \\servidor\compartilhamento · Ctrl+L"
+        spellcheck="false"
+      />
+      <button id="go">Ir</button>
+      <input
+        id="search"
+        aria-label="Pesquisar nesta pasta"
+        placeholder="Pesquisar nesta pasta"
+      />
+    </div>
+    <nav id="breadcrumbs" aria-label="Caminho da pasta"></nav>
+    <main>
+      <aside id="browser">
+        <h3>ACESSO RÁPIDO</h3>
+        <div id="places"></div>
+        <h3>ESTE COMPUTADOR</h3>
+        <div id="tree" aria-label="Pastas e unidades"></div>
+        <hr />
+        <h3>ATALHOS</h3>
+        <p>Espaço · Tela cheia</p>
+        <p>Ctrl+B · Revisão</p>
+        <p>← → · Foto anterior / próxima</p>
+        <p>↓ · Tirar da revisão</p>
+        <p>↑ · Restaurar na revisão</p>
+        <p>Ctrl+1–5 · Estrelas</p>
+        <p>Ctrl+0 · Limpar estrelas</p>
+        <div id="shortcutHelp"></div>
+      </aside>
+      <section id="grid" tabindex="0" aria-label="Arquivos da pasta"></section>
+      <aside id="inspector">
+        <h3>ORGANIZAR</h3>
+        <label
+          >Filtrar classificação<select id="filter">
+            <option value="all">Todas</option>
+            <option value="-1">Rejeitadas</option>
+            <option value="0">Sem estrelas</option>
+            <option value="1">★</option>
+            <option value="2">★★</option>
+            <option value="3">★★★</option>
+            <option value="4">★★★★</option>
+            <option value="5">★★★★★</option>
+          </select></label
+        >
+        <h3>SELEÇÃO</h3>
+        <div id="details">Nenhum arquivo selecionado</div>
+        <div id="stars"></div>
+        <label>Rótulo<select id="label"></select></label>
+        <div id="labelButtons"></div>
+        <button id="reject">Rejeitar</button
+        ><button id="clear">Limpar estrelas</button>
+        <p class="muted">Rótulos e estrelas ficam no catálogo local.</p>
+      </aside>
+    </main>
+    <footer>
+      <span id="status">Carregando…</span
+      ><label
+        >Miniaturas
+        <input id="size" type="range" min="110" max="320" value="180"
+      /></label>
+    </footer>
+    <div id="viewer" tabindex="-1" hidden>
+      <div id="viewerbar">
+        <span id="mode"></span><button id="close">Voltar · Esc</button>
+      </div>
+      <div id="stage">
+        <button
+          id="previousPhoto"
+          class="photoNav"
+          title="Foto anterior · ←"
+          aria-label="Foto anterior"
+        >
+          ❮
+        </button>
+        <div id="carousel"></div>
+        <button
+          id="nextPhoto"
+          class="photoNav"
+          title="Próxima foto · →"
+          aria-label="Próxima foto"
+        >
+          ❯
+        </button>
+      </div>
+      <p id="caption" aria-live="polite"></p>
+      <div id="viewerActions">
+        <button id="removeReview">↓ Tirar da seleção</button
+        ><button id="restoreReview">↑ Restaurar última</button>
+        <div id="viewerLabels"></div>
+      </div>
+      <p id="hint"></p>
+    </div>
+    <dialog id="settingsDialog">
+      <h2>Rótulos e atalhos</h2>
+      <p>
+        Defina os nomes e as teclas como prefere. Clique no campo de atalho e
+        pressione a combinação desejada.
+      </p>
+      <div class="settingsHeading">
+        <span>Cor</span><span>Nome do rótulo</span
+        ><span>Tecla / combinação</span>
+      </div>
+      <div id="settingsRows"></div>
+      <p class="muted">
+        Ctrl+1 a Ctrl+5 classificam com estrelas. Espaço, setas e Ctrl+B são
+        reservados à visualização e revisão. Backspace limpa um atalho.
+      </p>
+      <p id="settingsError" role="alert"></p>
+      <div class="dialogActions">
+        <button id="resetSettings">Restaurar padrões</button
+        ><button id="cancelSettings">Cancelar</button
+        ><button id="saveSettings" class="primary">Salvar</button>
+      </div>
+    </dialog>
+    <dialog id="batch">
+      <h2>Renomear em lote</h2>
+      <p>Renomear na mesma pasta, preservando as extensões.</p>
+      <div class="batchFields">
+        <label>Prefixo<input id="prefix" /></label
+        ><label
+          >Sequência inicial<input
+            id="start"
+            type="number"
+            min="0"
+            value="1" /></label
+        ><label
+          >Dígitos<select id="padding">
+            <option>1</option>
+            <option>2</option>
+            <option selected>3</option>
+            <option>4</option>
+            <option>5</option>
+            <option>6</option>
+          </select></label
+        >
+      </div>
+      <button id="preview">Visualizar</button>
+      <pre id="plan"></pre>
+      <div class="dialogActions">
+        <button id="cancel">Cancelar</button
+        ><button id="apply" class="primary" disabled>Aplicar renomeação</button>
+      </div>
+    </dialog>
+    <div id="fileMenu" role="menu" hidden></div>
+    <div id="error" role="alert" hidden></div>
+    <script src="shortcuts.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
