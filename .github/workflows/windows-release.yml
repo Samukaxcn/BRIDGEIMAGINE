@@ -1,0 +1,37 @@
+name: Windows release
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      ELECTRON_BUILDER_COMPRESSION_LEVEL: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run pack:win
+      - name: Prepare portable download
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path portable
+          Copy-Item 'dist/BRIDGEIMAGINE 0.1.0.exe' 'portable/BRIDGEIMAGINE.exe'
+          Copy-Item 'README.md' 'portable/LEIA-ME.md'
+          $checksum = (Get-FileHash 'portable/BRIDGEIMAGINE.exe' -Algorithm SHA256).Hash.ToLower()
+          "$checksum  BRIDGEIMAGINE.exe" | Set-Content 'portable/SHA256SUMS.txt'
+          Compress-Archive -Path 'portable/*' -DestinationPath 'dist/BRIDGEIMAGINE-Windows.zip'
+      - name: Publish download
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload v0.1.0 'dist/BRIDGEIMAGINE-Windows.zip' --clobber --repo '${{ github.repository }}'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          gh release edit v0.1.0 --draft=false --repo '${{ github.repository }}'

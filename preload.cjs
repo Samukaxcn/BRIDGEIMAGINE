@@ -1,0 +1,1 @@
+const {contextBridge,ipcRenderer}=require('electron');const api={};for(const name of ['fullscreen','open','folder','up','refresh','rate','preview','rename'])api[name]=(...args)=>ipcRenderer.invoke(name,...args);api.onLibrary=fn=>ipcRenderer.on('library',(_,data)=>fn(data));contextBridge.exposeInMainWorld('bridge',api);
